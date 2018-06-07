@@ -1,32 +1,35 @@
 local E, L, V, P, G = unpack(ElvUI)
 local EFL = E:NewModule("EnhancedFriendsList", "AceHook-3.0")
+local S = E:GetModule("Skins")
 local EP = LibStub("LibElvUIPlugin-1.0")
 local LSM = LibStub("LibSharedMedia-3.0", true)
-local addonName = ...
 
 local unpack, pairs, ipairs = unpack, pairs, ipairs
 local format = format
+local match = string.match
 
 local GetFriendInfo = GetFriendInfo
 local GetQuestDifficultyColor = GetQuestDifficultyColor
 local CLASS_ICON_TCOORDS = CLASS_ICON_TCOORDS
-local FRIENDS_BUTTON_TYPE_WOW = FRIENDS_BUTTON_TYPE_WOW
 local LOCALIZED_CLASS_NAMES_FEMALE = LOCALIZED_CLASS_NAMES_FEMALE
 local LOCALIZED_CLASS_NAMES_MALE = LOCALIZED_CLASS_NAMES_MALE
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
+FRIENDS_WOW_NAME_COLOR = {r = 0.996, g = 0.882, b = 0.361}
+FRIENDS_GRAY_COLOR = {r = 0.486, g = 0.518, b = 0.541}
+
 local StatusIcons = {
 	Default = {
-		Online = FRIENDS_TEXTURE_ONLINE,
-		Offline = FRIENDS_TEXTURE_OFFLINE,
-		DND = FRIENDS_TEXTURE_DND,
-		AFK = FRIENDS_TEXTURE_AFK
+		Online = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Default\\Online",
+		Offline = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Default\\Offline",
+		DND = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Default\\DND",
+		AFK = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Default\\AFK"
 	},
 	Square = {
 		Online = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Square\\Online",
 		Offline = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Square\\Offline",
-		DND	= "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Square\\DND",
-		AFK	= "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Square\\AFK"
+		DND = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Square\\DND",
+		AFK = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\Square\\AFK"
 	},
 	D3 = {
 		Online = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\D3\\Online",
@@ -35,6 +38,47 @@ local StatusIcons = {
 		AFK = "Interface\\AddOns\\ElvUI_EnhancedFriendsList\\Media\\Textures\\D3\\AFK"
 	}
 }
+
+local function FriendsFrame_GetLastOnline(lastOnline)
+	local year, month, day, hour, minute
+	local timeDifference = time() - lastOnline
+	local ONE_MINUTE = 60
+	local ONE_HOUR = 60 * ONE_MINUTE
+	local ONE_DAY = 24 * ONE_HOUR
+	local ONE_MONTH = 30 * ONE_DAY
+	local ONE_YEAR = 12 * ONE_MONTH
+	local LASTONLINE_SECS = "< a minute";
+
+	if timeDifference < ONE_MINUTE then
+		return LASTONLINE_SECS
+	elseif timeDifference <= ONE_MINUTE and timeDifference < ONE_HOUR then
+		return format(GENERIC_MIN_P1, floor(timeDifference / ONE_MINUTE))
+	elseif timeDifference >= ONE_HOUR and timeDifference < ONE_DAY then
+		return format(LASTONLINE_HOURS_P1, floor(timeDifference / ONE_HOUR))
+	elseif timeDifference >= ONE_DAY and timeDifference < ONE_MONTH then
+		return format(LASTONLINE_DAYS_P1, floor(timeDifference / ONE_DAY))
+	elseif timeDifference >= ONE_MONTH and timeDifference < ONE_YEAR then
+		return format(LASTONLINE_MONTHS_P1, floor(timeDifference / ONE_MONTH))
+	else
+		return format(LASTONLINE_YEARS_P1, floor(timeDifference / ONE_YEAR))
+	end
+end
+
+local function timeDiff(t2, t1)
+	if t2 < t1 then return end
+
+	local d1, d2, carry, diff = date("*t", t1), date("*t", t2), false, {}
+	local colMax = {60, 60, 24, date("*t", time{year = d1.year,month = d1.month + 1, day = 0}).day, 12}
+
+	d2.hour = d2.hour - (d2.isdst and 1 or 0) + (d1.isdst and 1 or 0)
+	for i, v in ipairs({"sec", "min", "hour", "day", "month", "year"}) do
+		diff[v] = d2[v] - d1[v] + (carry and -1 or 0)
+		carry = diff[v] < 0
+		if carry then diff[v] = diff[v] + colMax[i] end
+	end
+
+	return diff
+end
 
 local function GetLevelDiffColorHex(level, offline)
 	if level ~= 0 then
@@ -73,8 +117,8 @@ local function HexToRGB(hex)
 end
 
 function EFL:Update()
-	for i = 1, #FriendsFrameFriendsScrollFrame.buttons do
-		local button = FriendsFrameFriendsScrollFrame.buttons[i]
+	for i = 1, FRIENDS_TO_DISPLAY do
+		local button = _G["FriendsFrameFriendButton"..i]
 
 		self:Configure_Background(button)
 		self:Configure_Status(button)
@@ -102,6 +146,13 @@ function EFL:Configure_Status(button)
 	else
 		button.status:Hide()
 	end
+end
+
+function EFL:Construct_Status(button)
+	button.status = button:CreateTexture()
+	button.status:SetWidth(16)
+	button.status:SetHeight(16)
+	button.status:SetPoint("LEFT", 4, 7)
 end
 
 -- Name
@@ -155,12 +206,12 @@ function EFL:Update_Name(button)
 
 	button.name:ClearAllPoints()
 	if button.iconFrame:IsShown() then
-		button.name:Point("LEFT", button.iconFrame, "RIGHT", 3, infoText ~= "" and 7 or 0)
+		button.name:SetPoint("LEFT", button.iconFrame, "RIGHT", 9, infoText ~= "" and 7 or 0)
 	else
 		if E.db.enhanceFriendsList.showStatusIcon then
-			button.name:Point("TOPLEFT", 22, infoText ~= "" and -3 or -10)
+			button.name:SetPoint("TOPLEFT", 28, infoText ~= "" and -3 or -10)
 		else
-			button.name:Point("TOPLEFT", 3, infoText ~= "" and -3 or -10)
+			button.name:SetPoint("TOPLEFT", 9, infoText ~= "" and -3 or -10)
 		end
 	end
 end
@@ -209,20 +260,21 @@ end
 function EFL:Configure_IconFrame(button)
 	button.iconFrame:ClearAllPoints()
 	if E.db.enhanceFriendsList.showStatusIcon then
-		button.iconFrame:Point("LEFT", 22, 0)
+		button.iconFrame:SetPoint("LEFT", 22, 0)
 	else
-		button.iconFrame:Point("LEFT", 3, 0)
+		button.iconFrame:SetPoint("LEFT", 3, 0)
 	end
 end
 
 function EFL:Construct_IconFrame(button)
 	button.iconFrame = CreateFrame("Frame", "$parentIconFrame", button)
-	button.iconFrame:Size(26)
-	button.iconFrame:SetTemplate("Default")
+	button.iconFrame:SetWidth(26)
+	button.iconFrame:SetHeight(26)
+	E:SetTemplate(button.iconFrame, "Default")
 
 	button.iconFrame.texture = button.iconFrame:CreateTexture()
 	button.iconFrame.texture:SetAllPoints()
-	button.iconFrame.texture:SetTexture("Interface\\WorldStateFrame\\Icons-Classes")
+	button.iconFrame.texture:SetTexture("Interface\\AddOns\\ElvUI\\Media\\Textures\\Icons-Classes")
 	button.iconFrame:Hide()
 end
 
@@ -250,16 +302,18 @@ function EFL:Configure_Background(button)
 end
 
 function EFL:Construct_Background(button)
+	local width, height = (button:GetWidth() * 0.5), (button:GetHeight() * 0.92)
+
 	button.backgroundLeft = button:CreateTexture(nil, "BACKGROUND")
-	button.backgroundLeft:SetWidth(button:GetWidth() / 2)
-	button.backgroundLeft:SetHeight(32)
+	button.backgroundLeft:SetWidth(width)
+	button.backgroundLeft:SetHeight(height)
 	button.backgroundLeft:SetPoint("LEFT", button, "CENTER")
 	button.backgroundLeft:SetTexture(E.media.blankTex)
 	button.backgroundLeft:SetGradientAlpha("Horizontal", 1,0.824,0.0,0.05, 1,0.824,0.0,0)
 
 	button.backgroundRight = button:CreateTexture(nil, "BACKGROUND")
-	button.backgroundRight:SetWidth(button:GetWidth() / 2)
-	button.backgroundRight:SetHeight(32)
+	button.backgroundRight:SetWidth(width)
+	button.backgroundRight:SetHeight(height)
 	button.backgroundRight:SetPoint("RIGHT", button, "CENTER")
 	button.backgroundRight:SetTexture(E.media.blankTex)
 	button.backgroundRight:SetGradientAlpha("Horizontal", 1,0.824,0.0,0, 1,0.824,0.0,0.05)
@@ -285,19 +339,51 @@ function EFL:Update_Highlight(button)
 end
 
 function EFL:Construct_Highlight(button)
+	button:SetHighlightTexture(nil)
+	local width, height = (button:GetWidth() * 0.5), (button:GetHeight() * 0.92)
+
 	button.highlightLeft = button:CreateTexture(nil, "HIGHLIGHT")
-	button.highlightLeft:SetWidth(button:GetWidth() / 2)
-	button.highlightLeft:SetHeight(32)
+	button.highlightLeft:SetWidth(width)
+	button.highlightLeft:SetHeight(height)
 	button.highlightLeft:SetPoint("LEFT", button, "CENTER")
 	button.highlightLeft:SetTexture(E.media.blankTex)
 	button.highlightLeft:SetGradientAlpha("Horizontal", 0.243,0.570,1,0.35, 0.243,0.570,1,0)
 
 	button.highlightRight = button:CreateTexture(nil, "HIGHLIGHT")
-	button.highlightRight:SetWidth(button:GetWidth() / 2)
-	button.highlightRight:SetHeight(32)
+	button.highlightRight:SetWidth(width)
+	button.highlightRight:SetHeight(height)
 	button.highlightRight:SetPoint("RIGHT", button, "CENTER")
 	button.highlightRight:SetTexture(E.media.blankTex)
 	button.highlightRight:SetGradientAlpha("Horizontal", 0.243,0.570,1,0, 0.243,0.570,1,0.35)
+end
+
+-- Tooltip
+function EFL:Construct_Tooltip(button)
+	button:SetScript("OnEnter", function()
+		if not E.db.enhanceFriendsList.showTooltipInfo then return end
+
+		GameTooltip:SetOwner(this, "ANCHOR_BOTTOMRIGHT", 33, 30)
+		-- name
+		if button.TYPE == "Offline" then
+			GameTooltip:AddLine(this.nameText, 0.5, 0.5, 0.5)
+		else
+			GameTooltip:AddLine(this.nameText)
+		end
+		-- class
+		if button.TYPE == "Online" and this.class then
+			GameTooltip:AddLine(LEVEL.." "..this.levelText.." "..this.class, 1, 1, 1)
+		end
+		-- area
+		if button.TYPE == "Online" and this.area then
+			GameTooltip:AddLine(this.area, 0.5, 0.5, 0.5)
+		end
+		GameTooltip:Show()
+	end)
+	button:SetScript("OnLeave", function()
+		if E.db.enhanceFriendsList.showTooltipInfo then
+			GameTooltip:Hide()
+		end
+	end)
 end
 
 function EFL:GetLocalFriendInfo(name)
@@ -309,14 +395,23 @@ function EFL:GetLocalFriendInfo(name)
 	end
 end
 
-function EFL:EnhanceFriends_SetButton(button)
-	if button.buttonType == FRIENDS_BUTTON_TYPE_WOW then
-		local name, level, class, area, connected, status = GetFriendInfo(button.id)
+function EFL:FriendsList_Update()
+	local nameLocationText, infoText
+	local name, level, class, area, connected, status
+	local button
+
+	local friendOffset = FauxScrollFrame_GetOffset(FriendsFrameFriendsScrollFrame)
+	local friendIndex
+	for i = 1, FRIENDS_TO_DISPLAY, 1 do
+		friendIndex = friendOffset + i
+		local name, level, class, area, connected, status = GetFriendInfo(friendIndex)
 		if not name then return end
 
+		button = _G["FriendsFrameFriendButton"..i]
 		button.nameText = name
 		button.TYPE = connected and "Online" or "Offline"
 		button.statusType = status
+		button.id = friendIndex
 
 		if connected then
 			if not EnhancedFriendsListDB[E.myrealm][name] then
@@ -343,11 +438,6 @@ function EFL:EnhanceFriends_SetButton(button)
 	end
 end
 
-function EFL:FriendsFrameStatusDropDown_Update()
-	local status = (StatusIcons[E.db.enhanceFriendsList.statusIcons][(UnitIsDND("Player") and "DND" or UnitIsAFK("Player") and "AFK" or "Online")])
-	FriendsFrameStatusDropDownStatus:SetTexture(status)
-end
-
 function EFL:FriendListUpdate()
 	self.db = E.db.enhanceFriendsList
 
@@ -365,26 +455,28 @@ function EFL:FriendListUpdate()
 		ElvCharacterDB.EnhancedFriendsList_Data = nil
 	end
 
-	for i = 1, #FriendsFrameFriendsScrollFrame.buttons do
-		local button = FriendsFrameFriendsScrollFrame.buttons[i]
+	for i = 1, FRIENDS_TO_DISPLAY do
+		local button = _G["FriendsFrameFriendButton"..i]
 
+		E:StripTextures(button)
+
+		self:Construct_Status(button)
 		self:Construct_IconFrame(button)
-
 		self:Construct_Background(button)
-		button.background:Hide()
-
 		self:Construct_Highlight(button)
-		button.highlight:SetVertexColor(0, 0, 0, 0)
+		self:Construct_Tooltip(button)
+
+		button.name = _G["FriendsFrameFriendButton"..i.."ButtonTextNameLocation"]
+		button.info = _G["FriendsFrameFriendButton"..i.."ButtonTextInfo"]
 	end
 
 	self:Update()
 
-	self:SecureHook("FriendsFrameStatusDropDown_Update")
-	self:SecureHook(FriendsFrameFriendsScrollFrame, "buttonFunc", "EnhanceFriends_SetButton")
+	self:SecureHook("FriendsList_Update")
 end
 
 function EFL:Initialize()
-	EP:RegisterPlugin(addonName, self.InsertOptions)
+	EP:RegisterPlugin("ElvUI_EnhancedFriendsList", self.InsertOptions)
 
 	if not EnhancedFriendsListDB then
 		EnhancedFriendsListDB = {}

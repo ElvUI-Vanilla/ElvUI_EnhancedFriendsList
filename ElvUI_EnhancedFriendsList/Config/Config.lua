@@ -21,8 +21,8 @@ function EFL:InsertOptions()
 				order = 2,
 				type = "group",
 				name = L["General"],
-				get = function(info) return E.db.enhanceFriendsList[ info[#info] ] end,
-				set = function(info, value) E.db.enhanceFriendsList[ info[#info] ] = value; EFL:Update(); FriendsList_Update(); FriendsFrameStatusDropDown_Update() end,
+				get = function(info) return E.db.enhanceFriendsList[ info[getn(info)] ] end,
+				set = function(info, value) E.db.enhanceFriendsList[ info[getn(info)] ] = value; EFL:Update(); FriendsList_Update(); end,
 				args = {
 					header = {
 						order = 0,
@@ -39,8 +39,18 @@ function EFL:InsertOptions()
 						type = "toggle",
 						name = L["Show Status Icon"]
 					},
-					statusIcons = {
+					showNoteIcon = {
 						order = 3,
+						type = "toggle",
+						name = L["Show Note Icon"]
+					},
+					showTooltipInfo = {
+						order = 4,
+						type = "toggle",
+						name = L["Show Tooltip Info"]
+					},
+					statusIcons = {
+						order = 5,
 						type = "select",
 						name = L["Status Icons Textures"],
 						values = {
@@ -50,12 +60,12 @@ function EFL:InsertOptions()
 						}
 					},
 					nameFont = {
-						order = 4,
+						order = 6,
 						type = "group",
 						name = L["Name Font"],
 						guiInline = true,
-						get = function(info) return E.db.enhanceFriendsList[ info[#info] ] end,
-						set = function(info, value) E.db.enhanceFriendsList[ info[#info] ] = value; EFL:Update(); FriendsList_Update() end,
+						get = function(info) return E.db.enhanceFriendsList[ info[getn(info)] ] end,
+						set = function(info, value) E.db.enhanceFriendsList[ info[getn(info)] ] = value; EFL:Update(); FriendsList_Update() end,
 						args = {
 							nameFont = {
 								order = 1,
@@ -84,12 +94,12 @@ function EFL:InsertOptions()
 						}
 					},
 					zoneFont = {
-						order = 5,
+						order = 7,
 						type = "group",
 						name = L["Zone Font"],
 						guiInline = true,
-						get = function(info) return E.db.enhanceFriendsList[ info[#info] ] end,
-						set = function(info, value) E.db.enhanceFriendsList[ info[#info] ] = value; EFL:Update(); FriendsList_Update() end,
+						get = function(info) return E.db.enhanceFriendsList[ info[getn(info)] ] end,
+						set = function(info, value) E.db.enhanceFriendsList[ info[getn(info)] ] = value; EFL:Update(); FriendsList_Update() end,
 						args = {
 							zoneFont = {
 								order = 1,
@@ -123,13 +133,13 @@ function EFL:InsertOptions()
 				order = 3,
 				type = "group",
 				name = L["Online Friends"],
-				get = function(info) return E.db.enhanceFriendsList.Online[ info[#info] ] end,
-				set = function(info, value) E.db.enhanceFriendsList.Online[ info[#info] ] = value; EFL:Update(); FriendsList_Update() end,
+				get = function(info) return E.db.enhanceFriendsList.Online[ info[getn(info)] ] end,
+				set = function(info, value) E.db.enhanceFriendsList.Online[ info[getn(info)] ] = value; EFL:Update(); FriendsList_Update() end,
 				args = {
 					header = {
 						order = 0,
 						type = "header",
-						name = L["Online Friends"]
+						name = L["Online Friends"],
 					},
 					name = {
 						order = 1,
@@ -279,13 +289,13 @@ function EFL:InsertOptions()
 				order = 4,
 				type = "group",
 				name = L["Offline Friends"],
-				get = function(info) return E.db.enhanceFriendsList.Offline[ info[#info] ] end,
-				set = function(info, value) E.db.enhanceFriendsList.Offline[ info[#info] ] = value; EFL:Update(); FriendsList_Update() end,
+				get = function(info) return E.db.enhanceFriendsList.Offline[ info[getn(info)] ] end,
+				set = function(info, value) E.db.enhanceFriendsList.Offline[ info[getn(info)] ] = value; EFL:Update(); FriendsList_Update() end,
 				args = {
 					header = {
 						order = 0,
 						type = "header",
-						name = L["Offline Friends"]
+						name = L["Offline Friends"],
 					},
 					name = {
 						order = 1,
