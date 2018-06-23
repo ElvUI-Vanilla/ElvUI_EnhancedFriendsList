@@ -40,18 +40,17 @@ local StatusIcons = {
 }
 
 local function FriendsFrame_GetLastOnline(lastOnline)
-	local year, month, day, hour, minute
 	local timeDifference = time() - lastOnline
 	local ONE_MINUTE = 60
 	local ONE_HOUR = 60 * ONE_MINUTE
 	local ONE_DAY = 24 * ONE_HOUR
 	local ONE_MONTH = 30 * ONE_DAY
 	local ONE_YEAR = 12 * ONE_MONTH
-	local LASTONLINE_SECS = "< a minute";
+	local LASTONLINE_SECS = "< a minute"
 
 	if timeDifference < ONE_MINUTE then
 		return LASTONLINE_SECS
-	elseif timeDifference <= ONE_MINUTE and timeDifference < ONE_HOUR then
+	elseif timeDifference >= ONE_MINUTE and timeDifference < ONE_HOUR then
 		return format(GENERIC_MIN_P1, floor(timeDifference / ONE_MINUTE))
 	elseif timeDifference >= ONE_HOUR and timeDifference < ONE_DAY then
 		return format(LASTONLINE_HOURS_P1, floor(timeDifference / ONE_HOUR))
