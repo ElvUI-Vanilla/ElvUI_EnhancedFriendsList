@@ -1,16 +1,18 @@
-local E, L, V, P, G = unpack(ElvUI)
-local EFL = E:NewModule("EnhancedFriendsList", "AceHook-3.0")
-local S = E:GetModule("Skins")
-local EP = LibStub("LibElvUIPlugin-1.0")
-local LSM = LibStub("LibSharedMedia-3.0", true)
+local E, L, V, P, G = unpack(ElvUI); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local EFL = E:NewModule("EnhancedFriendsList", "AceHook-3.0");
+local S = E:GetModule("Skins");
+local EP = LibStub("LibElvUIPlugin-1.0");
+local LSM = LibStub("LibSharedMedia-3.0", true);
 
-local unpack, pairs, ipairs = unpack, pairs, ipairs
-local format = format
-local match = string.match
-
+--Cache global variables
+--Lua functions
+local unpack, pairs, ipairs, tonumber = unpack, pairs, ipairs, tonumber
+local format, sub = string.format, string.sub
+--WoW API / Variables
 local GetFriendInfo = GetFriendInfo
 local GetQuestDifficultyColor = GetQuestDifficultyColor
 local CLASS_ICON_TCOORDS = CLASS_ICON_TCOORDS
+local LEVEL = LEVEL
 local LOCALIZED_CLASS_NAMES_FEMALE = LOCALIZED_CLASS_NAMES_FEMALE
 local LOCALIZED_CLASS_NAMES_MALE = LOCALIZED_CLASS_NAMES_MALE
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
@@ -111,7 +113,7 @@ end
 local function HexToRGB(hex)
 	if not hex then return nil end
 
-	local rhex, ghex, bhex = string.sub(hex, 5, 6), string.sub(hex, 7, 8), string.sub(hex, 9, 10)
+	local rhex, ghex, bhex = sub(hex, 5, 6), sub(hex, 7, 8), sub(hex, 9, 10)
 	return {r = tonumber(rhex, 16)/225, g = tonumber(ghex, 16)/225, b = tonumber(bhex, 16)/225}
 end
 

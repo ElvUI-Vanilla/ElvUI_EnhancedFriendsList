@@ -1,12 +1,55 @@
-local E, L, V, P, G = unpack(ElvUI)
-local EFL = E:GetModule("EnhancedFriendsList")
+local E, L, V, P, G = unpack(ElvUI); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local EFL = E:GetModule("EnhancedFriendsList");
+
+--Cache global variables
+--Lua functions
+local FONT_SIZE, NONE = FONT_SIZE, NONE
+local CLASS, LEVEL, NAME, ZONE = CLASS, LEVEL, NAME, ZONE
+--WoW API / Variables
+local format = string.format
 
 local function ColorizeSettingName(settingName)
 	return format("|cff1784d1%s|r", settingName)
 end
 
 function EFL:InsertOptions()
-	E.Options.args.enhanceFriendsList = {
+	if not E.Options.args.elvuiPlugins then
+		E.Options.args.elvuiPlugins = {
+			order = 50,
+			type = "group",
+			name = "|cff175581E|r|cffC4C4C4lvUI_|r|cff175581P|r|cffC4C4C4lugins|r",
+			args = {
+				header = {
+					order = 0,
+					type = "header",
+					name = "|cff175581E|r|cffC4C4C4lvUI_|r|cff175581P|r|cffC4C4C4lugins|r"
+				},
+				enhanceFriendsListShortcut = {
+					type = "execute",
+					name = ColorizeSettingName(L["Enhanced Friends List"]),
+					func = function()
+						if IsAddOnLoaded("ElvUI_Config") then
+							local ACD = LibStub("AceConfigDialog-3.0")
+							ACD:SelectGroup("ElvUI", "elvuiPlugins", "enhanceFriendsList", "general")
+						end
+					end
+				}
+			}
+		}
+	elseif not E.Options.args.elvuiPlugins.args.enhanceFriendsListShortcut then
+		E.Options.args.elvuiPlugins.args.enhanceFriendsListShortcut = {
+			type = "execute",
+			name = ColorizeSettingName(L["Enhanced Friends List"]),
+			func = function()
+				if IsAddOnLoaded("ElvUI_Config") then
+					local ACD = LibStub("AceConfigDialog-3.0")
+					ACD:SelectGroup("ElvUI", "elvuiPlugins", "enhanceFriendsList", "general")
+				end
+			end
+		}
+	end
+
+ 	E.Options.args.elvuiPlugins.args.enhanceFriendsList = {
 		order = 54,
 		type = "group",
 		childGroups = "tab",
