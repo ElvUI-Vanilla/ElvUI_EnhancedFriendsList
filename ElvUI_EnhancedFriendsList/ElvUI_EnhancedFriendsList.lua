@@ -151,8 +151,7 @@ end
 
 function EFL:Construct_Status(button)
 	button.status = button:CreateTexture()
-	button.status:SetWidth(16)
-	button.status:SetHeight(16)
+	E:Size(button.status, 16)
 	button.status:SetPoint("LEFT", 4, 7)
 end
 
@@ -207,12 +206,12 @@ function EFL:Update_Name(button)
 
 	button.name:ClearAllPoints()
 	if button.iconFrame:IsShown() then
-		button.name:SetPoint("LEFT", button.iconFrame, "RIGHT", 9, infoText ~= "" and 7 or 0)
+		E:Point(button.name, "LEFT", button.iconFrame, "RIGHT", 9, infoText ~= "" and 7 or 0)
 	else
 		if E.db.enhanceFriendsList.showStatusIcon then
-			button.name:SetPoint("TOPLEFT", 28, infoText ~= "" and -3 or -10)
+			E:Point(button.name, "TOPLEFT", 28, infoText ~= "" and -3 or -10)
 		else
-			button.name:SetPoint("TOPLEFT", 9, infoText ~= "" and -3 or -10)
+			E:Point(button.name, "TOPLEFT", 9, infoText ~= "" and -3 or -10)
 		end
 	end
 end
@@ -261,9 +260,9 @@ end
 function EFL:Configure_IconFrame(button)
 	button.iconFrame:ClearAllPoints()
 	if E.db.enhanceFriendsList.showStatusIcon then
-		button.iconFrame:SetPoint("LEFT", 22, 0)
+		E:Point(button.iconFrame, "LEFT", 22, 0)
 	else
-		button.iconFrame:SetPoint("LEFT", 3, 0)
+		E:Point(button.iconFrame, "LEFT", 3, 0)
 	end
 end
 
@@ -306,15 +305,13 @@ function EFL:Construct_Background(button)
 	local width, height = (button:GetWidth() * 0.5), (button:GetHeight() * 0.92)
 
 	button.backgroundLeft = button:CreateTexture(nil, "BACKGROUND")
-	button.backgroundLeft:SetWidth(width)
-	button.backgroundLeft:SetHeight(height)
+	E:Size(button.backgroundLeft, width, height)
 	button.backgroundLeft:SetPoint("LEFT", button, "CENTER")
 	button.backgroundLeft:SetTexture(E.media.blankTex)
 	button.backgroundLeft:SetGradientAlpha("Horizontal", 1,0.824,0.0,0.05, 1,0.824,0.0,0)
 
 	button.backgroundRight = button:CreateTexture(nil, "BACKGROUND")
-	button.backgroundRight:SetWidth(width)
-	button.backgroundRight:SetHeight(height)
+	E:Size(button.backgroundRight, width, height)
 	button.backgroundRight:SetPoint("RIGHT", button, "CENTER")
 	button.backgroundRight:SetTexture(E.media.blankTex)
 	button.backgroundRight:SetGradientAlpha("Horizontal", 1,0.824,0.0,0, 1,0.824,0.0,0.05)
@@ -344,15 +341,13 @@ function EFL:Construct_Highlight(button)
 	local width, height = (button:GetWidth() * 0.5), (button:GetHeight() * 0.92)
 
 	button.highlightLeft = button:CreateTexture(nil, "HIGHLIGHT")
-	button.highlightLeft:SetWidth(width)
-	button.highlightLeft:SetHeight(height)
+	E:Size(button.highlightLeft, width, height)
 	button.highlightLeft:SetPoint("LEFT", button, "CENTER")
 	button.highlightLeft:SetTexture(E.media.blankTex)
 	button.highlightLeft:SetGradientAlpha("Horizontal", 0.243,0.570,1,0.35, 0.243,0.570,1,0)
 
 	button.highlightRight = button:CreateTexture(nil, "HIGHLIGHT")
-	button.highlightRight:SetWidth(width)
-	button.highlightRight:SetHeight(height)
+	E:Size(button.highlightRight, width, height)
 	button.highlightRight:SetPoint("RIGHT", button, "CENTER")
 	button.highlightRight:SetTexture(E.media.blankTex)
 	button.highlightRight:SetGradientAlpha("Horizontal", 0.243,0.570,1,0, 0.243,0.570,1,0.35)
